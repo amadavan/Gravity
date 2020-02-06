@@ -2170,8 +2170,8 @@ shared_ptr<Model<>> build_SDPOPF(PowerNet& grid, bool current, double upper_boun
         Im_Vi.set_lb((grid.ref_bus),0);
         Im_Vi.set_ub((grid.ref_bus),0);
         
-        R_Vi.set_lb((grid.ref_bus),v_min(grid.ref_bus).eval());
-        R_Vi.set_ub((grid.ref_bus),v_max(grid.ref_bus).eval());
+        //R_Vi.set_lb((grid.ref_bus),v_min(grid.ref_bus).eval());
+        //R_Vi.set_ub((grid.ref_bus),v_max(grid.ref_bus).eval());
         
 
         var<Cpx> Vi("Vi"), Vj("Vj"), Wij("Wij");
@@ -2267,8 +2267,13 @@ shared_ptr<Model<>> build_SDPOPF(PowerNet& grid, bool current, double upper_boun
         }
         else {
             SDPOPF->add(SDP3.in(range(0,bag_size-1)) >= 0);
-            DebugOn("Number of 3d determinant cuts = " << SDP3.get_nb_instances() << endl);
+            //DebugOn("Number of 3d determinant cuts = " << SDP3.get_nb_instances() << endl);
         }
+       
+        /* Second-order cone constraints */
+        
+        
+
         }
     
     
