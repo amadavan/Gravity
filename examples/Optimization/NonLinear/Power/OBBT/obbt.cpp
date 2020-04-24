@@ -46,7 +46,7 @@ int main (int argc, char * argv[]) {
     const double tol = 1e-6;
     string mehrotra = "no";
     
-    bool linearize=false;
+    bool linearize=true;
     
     
     string fname = string(prj_dir)+"/data_sets/Power/nesta_case9_bgm__nco.m";
@@ -116,10 +116,10 @@ int main (int argc, char * argv[]) {
     
     auto max_time = op::str2double(opt["t"]);
 #else
-    if(argc==4){
+    if(argc==3){
         fname=argv[1];
         time_s=argv[2];
-        sdp_kim_s=argv[3];
+       // sdp_kim_s=argv[3];
     }
     //    else{
     //        fname=string(prj_dir)+"/data_sets/Power/nesta_case9_bgm__nco.m";
@@ -199,7 +199,7 @@ int main (int argc, char * argv[]) {
         SDPLB.run(output = 5, lb_solver_tol);
         auto solver_time1= get_wall_time();
         auto SDPOA=SDP->buildOA(5, 5);
-        DebugOn(grid._name<<endl);
+        DebugOff(grid._name<<endl);
         DebugOn("Number of variables "<< SDP->_nb_vars<<endl);
         DebugOn("Number of constraints orginal lower bound "<< SDP->_nb_cons<<endl);
         DebugOn("Number of symbolic constraints orginal lower bound "<< SDP->_cons_name.size()<<endl );
