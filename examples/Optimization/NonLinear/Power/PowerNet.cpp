@@ -584,7 +584,7 @@ indices PowerNet::get_gens_cont(const vector<pair<string, pair<Arc *, Gen *>>> &
   size_t inst = 0;
   for (auto &pair : conts) {
     for (auto g: gens) {
-      if (g->_active && g == pair.second.second) {
+      if (g->_active && g != pair.second.second) {
         key = g->_name;
         auto it1 = ids._keys_map->find(key);
         if (it1 == ids._keys_map->end()) {
@@ -610,6 +610,54 @@ indices PowerNet::get_nodes_cont(const vector<pair<string, pair<Arc *, Gen *>>> 
     for (auto n: nodes) {
       if (n->_active) {
         key = n->_name;
+        auto it1 = ids._keys_map->find(key);
+        if (it1 == ids._keys_map->end()) {
+          throw invalid_argument("In function get_nodes_cont(), unknown key: " + key);
+        }
+        ids._ids->at(inst).push_back(it1->second);
+      }
+    }
+    inst++;
+  }
+  return ids;
+}
+
+indices PowerNet::get_gens_cont2(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &index_c) const {
+  auto ids = indices(index_c);
+  ids.set_name("gens_cont");
+  ids._type = matrix_;
+  ids._ids = make_shared<vector<vector<size_t>>>();
+  ids._ids->resize(conts.size());
+  string key;
+  size_t inst = 0;
+  for (auto &pair : conts) {
+    for (auto g: gens) {
+      if (g->_active && g != pair.second.second) {
+        key = pair.first + "," + g->_name;
+        auto it1 = ids._keys_map->find(key);
+        if (it1 == ids._keys_map->end()) {
+          throw invalid_argument("In function get_gens_cont(), unknown key: " + key);
+        }
+        ids._ids->at(inst).push_back(it1->second);
+      }
+    }
+    inst++;
+  }
+  return ids;
+}
+
+indices PowerNet::get_nodes_cont2(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &index_c) const {
+  auto ids = indices(index_c);
+  ids.set_name("nodes_cont");
+  ids._type = matrix_;
+  ids._ids = make_shared<vector<vector<size_t>>>();
+  ids._ids->resize(conts.size());
+  string key;
+  size_t inst = 0;
+  for (auto &pair : conts) {
+    for (auto n: nodes) {
+      if (n->_active) {
+        key = pair.first + "," + n->_name;
         auto it1 = ids._keys_map->find(key);
         if (it1 == ids._keys_map->end()) {
           throw invalid_argument("In function get_nodes_cont(), unknown key: " + key);

@@ -309,6 +309,8 @@ public:
   indices out_arcs_per_node_cont(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &arcs_c) const;
   indices get_gens_cont(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &index_c) const;
   indices get_nodes_cont(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &index_c) const;
+  indices get_gens_cont2(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &index_c) const;
+  indices get_nodes_cont2(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &index_c) const;
 
   unique_ptr<Model<>> build_fixed_ACOPF_N_1(PowerModelType Model,
                                             int output,

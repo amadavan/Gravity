@@ -203,8 +203,8 @@ int main(int argc, char *argv[]) {
 
   auto matrix_gens_c = grid.get_gens_cont(conting_lines, gens);
   auto matrix_nodes_c = grid.get_nodes_cont(conting_lines, nodes);
-
-  matrix_gens_c.print();
+  auto matrix_gens_c2 = grid.get_gens_cont2(conting_lines, gens_c);
+  auto matrix_nodes_c2 = grid.get_nodes_cont2(conting_lines, nodes_c);
 
   auto c1_c = grid.c1.in(matrix_gens_c);
   auto voll_c = voll.in(matrix_nodes_c);
@@ -296,9 +296,8 @@ int main(int argc, char *argv[]) {
 
   /* CVaR lower bound */
   Constraint<> OBJ_BOUND_c("OBJ_BOUND_c");
-  OBJ_BOUND_c =
-      y_c.in(contingencies) + z - product(c1_c, dPg_p.in(matrix_gens_c)) - product(c1_c, dPg_n) - product(voll_c, dD_c)
-          - product(c1_c, Pg_nom);
+  OBJ_BOUND_c = y_c.in(contingencies) + z - product(c1_c, Pg_nom) - product(c1_c, dPg_p.in(matrix_gens_c2))
+      - product(c1_c, dPg_n.in(matrix_gens_c2)) - product(voll_c, dD_c.in(matrix_nodes_c2));
   RSCED.add(OBJ_BOUND_c.in(contingencies) >= 0);
 
   /* Power flow constraint */
