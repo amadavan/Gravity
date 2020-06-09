@@ -309,6 +309,7 @@ public:
   indices out_arcs_per_node_cont(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &arcs_c) const;
   indices get_gens_cont(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &index_c) const;
   indices get_nodes_cont(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &index_c) const;
+  indices gens_per_node_cont1(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &gens) const;
   indices get_gens_cont2(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &index_c) const;
   indices get_nodes_cont2(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &index_c) const;
 

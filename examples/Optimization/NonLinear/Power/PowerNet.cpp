@@ -622,6 +622,36 @@ indices PowerNet::get_nodes_cont(const vector<pair<string, pair<Arc *, Gen *>>> 
   return ids;
 }
 
+indices PowerNet::gens_per_node_cont1(const vector<pair<string, pair<Arc *, Gen *>>> &conts,
+                                      const indices &gens) const {
+  indices ids("gens_per_node_cont");
+  ids = indices(gens);
+  ids._type = matrix_;
+  ids._ids = make_shared<vector<vector<size_t>>>();
+  ids._ids->resize(conts.size() * get_nb_active_nodes());
+  string key;
+  size_t inst = 0;
+  for (auto &pair: conts) {
+    for (auto n: nodes) {
+      if (n->_active) {
+        for (auto g: ((Bus *) n)->_gen) {
+          if (!g->_active || g == pair.second.second) {
+            continue;
+          }
+          key = g->_name;
+          auto it1 = ids._keys_map->find(key);
+          if (it1 == ids._keys_map->end()) {
+            throw invalid_argument("In function gens_per_node(), unknown key.");
+          }
+          ids._ids->at(inst).push_back(it1->second);
+        }
+        inst++;
+      }
+    }
+  }
+  return ids;
+}
+
 indices PowerNet::get_gens_cont2(const vector<pair<string, pair<Arc *, Gen *>>> &conts, const indices &index_c) const {
   auto ids = indices(index_c);
   ids.set_name("gens_cont");

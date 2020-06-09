@@ -197,6 +197,7 @@ int main(int argc, char *argv[]) {
   auto nodes_c = indices(contingencies, nodes);
   auto gens_c = indices(contingencies, gens);
 
+  auto gen_nodes_c1 = grid.gens_per_node_cont1(conting_lines, gens);
   auto gen_nodes_c = grid.gens_per_node_cont(conting_lines, gens_c);
   auto out_arcs_c = grid.out_arcs_per_node_cont(conting_lines, arcs_c);
   auto in_arcs_c = grid.in_arcs_per_node_cont(conting_lines, arcs_c);
@@ -265,7 +266,7 @@ int main(int argc, char *argv[]) {
 
   /* Power balance constraint */
   Constraint<> KCL_P_c("KCL_P_c");
-  KCL_P_c = sum(Pf_c, out_arcs_c) - sum(Pf_c, in_arcs_c) + pl_c + gs_c - sum(Pg_nom);
+  KCL_P_c = sum(Pf_c, out_arcs_c) - sum(Pf_c, in_arcs_c) + pl_c + gs_c - sum(Pg, gen_nodes_c1);
   RSCED.add(KCL_P_c.in(nodes_c) == 0);
 
   /* Phase Angle Bounds constraints */
@@ -296,8 +297,9 @@ int main(int argc, char *argv[]) {
 
   /* CVaR lower bound */
   Constraint<> OBJ_BOUND_c("OBJ_BOUND_c");
-  OBJ_BOUND_c = y_c.in(contingencies) + z - product(c1_c, Pg_nom) - product(c1_c, dPg_p.in(matrix_gens_c2))
-      - product(c1_c, dPg_n.in(matrix_gens_c2)) - product(voll_c, dD_c.in(matrix_nodes_c2));
+  OBJ_BOUND_c =
+      y_c.in(contingencies) + z - product(c1_c, Pg.in(matrix_gens_c)) - product(c1_c, dPg_p.in(matrix_gens_c2))
+          - product(c1_c, dPg_n.in(matrix_gens_c2)) - product(voll_c, dD_c.in(matrix_nodes_c2));
   RSCED.add(OBJ_BOUND_c.in(contingencies) >= 0);
 
   /* Power flow constraint */
@@ -307,8 +309,9 @@ int main(int argc, char *argv[]) {
 
   /* Power balance constraint */
   Constraint<> KCL_P_recourse_c("KCL_P_recourse_c");
-  KCL_P_recourse_c = sum(Pf_recourse_c, out_arcs_c) - sum(Pf_recourse_c, in_arcs_c) + pl_c + gs_c - sum(Pg_nom)
-      - sum(dPg_p, gen_nodes_c) + sum(dPg_n, gen_nodes_c) - sum(dD_c, nodes_c);
+  KCL_P_recourse_c =
+      sum(Pf_recourse_c, out_arcs_c) - sum(Pf_recourse_c, in_arcs_c) + pl_c + gs_c - sum(Pg, gen_nodes_c1)
+          - sum(dPg_p, gen_nodes_c) + sum(dPg_n, gen_nodes_c) - dD_c;
   RSCED.add(KCL_P_recourse_c.in(nodes_c) == 0);
 
   /* Phase Angle Bounds constraints */
@@ -370,7 +373,7 @@ int main(int argc, char *argv[]) {
     RSCED_SOLVER = solver<>(RSCED, ipopt);
 
   auto solver_time_start = get_wall_time();
-  RSCED_SOLVER.run(output = 0, tol = 1e-6);
+  RSCED_SOLVER.run(output = 5, tol = 1e-6);
   solver_time_end = get_wall_time();
   total_time_end = get_wall_time();
   solve_time = solver_time_end - solver_time_start;
