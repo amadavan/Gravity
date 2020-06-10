@@ -91,6 +91,7 @@ int main(int argc, char *argv[]) {
   auto c1 = grid.c1.in(gens);
   auto c2 = grid.c2.in(gens);
   auto c0 = grid.c0.in(gens);
+  auto gs = grid.gs.in(nodes);
   auto S_max = grid.S_max.in(arcs);
   auto b = grid.b.in(arcs);
   auto th_min = grid.th_min.in(node_pairs);
@@ -149,7 +150,7 @@ int main(int argc, char *argv[]) {
   /* Power balance constraint */
   Constraint<> KCL_P("KCL_P");
   KCL_P = b.tr().in(in_arcs) * (theta.from(in_arcs) - theta.to(in_arcs))
-      - b.tr().in(out_arcs) * (theta.from(out_arcs) - theta.to(out_arcs)) + pl - sum(Pg, gen_nodes);
+      - b.tr().in(out_arcs) * (theta.from(out_arcs) - theta.to(out_arcs)) + pl + gs - sum(Pg, gen_nodes);
   RSCED.add(KCL_P.in(nodes) == 0);
 
   /* Phase Angle Bounds constraints */
@@ -212,6 +213,7 @@ int main(int argc, char *argv[]) {
   auto ramp_max_c = ramp_max.from_ith(1, gens_c);
 
   auto pl_c = pl.from_ith(1, nodes_c);
+  auto gs_c = gs.from_ith(1, nodes_c);
 
   auto Pg_nom = Pg.from_ith(1, gens_c);
 
@@ -249,9 +251,12 @@ int main(int argc, char *argv[]) {
   y_c.add_lb_only(0);
 
   /* Slack variables */
-  var<> slack_kcl_c("slack_kcl_c");
-  RSCED.add(slack_kcl_c.in(nodes_c));
-  slack_kcl_c.add_lb_only(0);
+  var<> slack_kcl_p_c("slack_kcl_p_c");
+  RSCED.add(slack_kcl_p_c.in(nodes_c));
+  slack_kcl_p_c.add_lb_only(0);
+  var<> slack_kcl_n_c("slack_kcl_n_c");
+  RSCED.add(slack_kcl_n_c.in(nodes_c));
+  slack_kcl_n_c.add_lb_only(0);
   var<> slack_pad_c("slack_pad_c");
   RSCED.add(slack_pad_c.in(node_pairs_c));
   slack_pad_c.add_lb_only(0);
@@ -278,7 +283,8 @@ int main(int argc, char *argv[]) {
 
   /* Power balance constraint */
   Constraint<> KCL_P_c("KCL_P_c");
-  KCL_P_c = sum(Pf_c, out_arcs_c) - sum(Pf_c, in_arcs_c) + pl_c - sum(Pg, gen_nodes_c1) + slack_kcl_c;
+  KCL_P_c = sum(Pf_c, out_arcs_c) - sum(Pf_c, in_arcs_c) + pl_c + gs_c - sum(Pg, gen_nodes_c1) + slack_kcl_p_c
+      - slack_kcl_n_c;
   RSCED.add(KCL_P_c.in(nodes_c) == 0);
 
   /* Phase Angle Bounds constraints */
@@ -320,7 +326,7 @@ int main(int argc, char *argv[]) {
   /* Power balance constraint */
   Constraint<> KCL_P_recourse_c("KCL_P_recourse_c");
   KCL_P_recourse_c =
-      sum(Pf_recourse_c, out_arcs_c) - sum(Pf_recourse_c, in_arcs_c) + pl_c - sum(Pg, gen_nodes_c1)
+      sum(Pf_recourse_c, out_arcs_c) - sum(Pf_recourse_c, in_arcs_c) + pl_c + gs_c - sum(Pg, gen_nodes_c1)
           - sum(dPg_p, gen_nodes_c) + sum(dPg_n, gen_nodes_c) - dD_c;
   RSCED.add(KCL_P_recourse_c.in(nodes_c) == 0);
 
@@ -368,12 +374,12 @@ int main(int argc, char *argv[]) {
   obj += alpha_prime * failure_probability * sum(y_c, contingencies);
   obj += 999999 * sum(slack_thermal_c, arcs_c) + 999999 * sum(slack_thermal_recourse_c, arcs_c)
       + 999999 * sum(slack_pad_c, node_pairs_c) + 999999 * sum(slack_pad_recourse_c, node_pairs_c)
-      + 999999 * sum(slack_kcl_c, nodes_c);
+      + 999999 * sum(slack_kcl_p_c, nodes_c) + 999999 * sum(slack_kcl_n_c, nodes_c);
 
   /* Set objective */
   RSCED.min(obj);
 
-  RSCED.print();
+//  RSCED.print();
 
   /** Solve */
   solver<> RSCED_SOLVER(RSCED, ipopt);
