@@ -15,7 +15,7 @@
 
 int main(int argc, char *argv[]) {
   int output = 0;
-  bool projected = false, use_cplex = false, use_gurobi = false;
+  bool use_cplex = false, use_gurobi = false;
   double tol = 1e-6;
   double solver_time_end, total_time_end, solve_time, total_time;
   string mehrotra = "no", log_level = "0";
@@ -23,7 +23,6 @@ int main(int argc, char *argv[]) {
 
   string path = argv[0];
   string solver_str = "ipopt";
-  string proj_str = "0";
 
   // TODO: properly include CVaR parameter
   double cvar_param = 0.;
@@ -32,7 +31,6 @@ int main(int argc, char *argv[]) {
   /** Create a OptionParser with options */
   auto options = readOptions(argc, argv);
   options.add_option("f", "file", "Input file name", fname);
-  options.add_option("p", "project", "Project the power flow variables", proj_str);
   options.add_option("s", "solver", "Solvers: ipopt/cplex/gurobi, default = ipopt", solver_str);
 
   /** Parse the options and verify that all went well. If not, errors and help will be shown */
@@ -55,10 +53,6 @@ int main(int argc, char *argv[]) {
     use_gurobi = true;
   } else if (solver_str.compare("cplex") == 0) {
     use_cplex = true;
-  }
-  solver_str = options["p"];
-  if (solver_str.compare("1") == 0) {
-    projected = true;
   }
 #else
   if(argc==2){
@@ -97,7 +91,6 @@ int main(int argc, char *argv[]) {
   auto c1 = grid.c1.in(gens);
   auto c2 = grid.c2.in(gens);
   auto c0 = grid.c0.in(gens);
-  auto gs = grid.gs.in(nodes);
   auto S_max = grid.S_max.in(arcs);
   auto b = grid.b.in(arcs);
   auto th_min = grid.th_min.in(node_pairs);
@@ -113,7 +106,7 @@ int main(int argc, char *argv[]) {
   double STE_multiplier = 1.2;
 
   // TODO: Line failure probabilities
-  double failure_probability = 0.05;
+  double failure_probability = 0.1 / nb_lines;
 
   // TODO: Include CVaR parameter (alpha' = 1/(1 - alpha))
   double alpha_prime = 1. / (1. - cvar_param);
@@ -156,7 +149,7 @@ int main(int argc, char *argv[]) {
   /* Power balance constraint */
   Constraint<> KCL_P("KCL_P");
   KCL_P = b.tr().in(in_arcs) * (theta.from(in_arcs) - theta.to(in_arcs))
-      - b.tr().in(out_arcs) * (theta.from(out_arcs) - theta.to(out_arcs)) + pl + gs - sum(Pg, gen_nodes);
+      - b.tr().in(out_arcs) * (theta.from(out_arcs) - theta.to(out_arcs)) + pl - sum(Pg, gen_nodes);
   RSCED.add(KCL_P.in(nodes) == 0);
 
   /* Phase Angle Bounds constraints */
@@ -219,7 +212,6 @@ int main(int argc, char *argv[]) {
   auto ramp_max_c = ramp_max.from_ith(1, gens_c);
 
   auto pl_c = pl.from_ith(1, nodes_c);
-  auto gs_c = gs.from_ith(1, nodes_c);
 
   auto Pg_nom = Pg.from_ith(1, gens_c);
 
@@ -227,10 +219,12 @@ int main(int argc, char *argv[]) {
   /* Positive recourse generation */
   var<> dPg_p("dPg_p");
   RSCED.add(dPg_p.in(gens_c));
+  dPg_p.add_lb_only(0);
 
   /* Negative recourse generation */
   var<> dPg_n("dPg_n");
   RSCED.add(dPg_n.in(gens_c));
+  dPg_n.add_lb_only(0);
 
   /* Power flows */
   var<> Pf_c("Pf_c");
@@ -247,17 +241,35 @@ int main(int argc, char *argv[]) {
   /* Load shed variables */
   var<> dD_c("dD_c");
   RSCED.add(dD_c.in(nodes_c));
+  dD_c.set_lb(0);
 
   /* CVaR reformulation variable */
   var<> y_c("y_c");
   RSCED.add(y_c.in(contingencies));
   y_c.add_lb_only(0);
 
+  /* Slack variables */
+  var<> slack_kcl_c("slack_kcl_c");
+  RSCED.add(slack_kcl_c.in(nodes_c));
+  slack_kcl_c.add_lb_only(0);
+  var<> slack_pad_c("slack_pad_c");
+  RSCED.add(slack_pad_c.in(node_pairs_c));
+  slack_pad_c.add_lb_only(0);
+  var<> slack_pad_recourse_c("slack_pad_recourse_c");
+  RSCED.add(slack_pad_recourse_c.in(node_pairs_c));
+  slack_pad_recourse_c.add_lb_only(0);
+  var<> slack_thermal_c("slack_thermal_c");
+  RSCED.add(slack_thermal_c.in(arcs_c));
+  slack_thermal_c.add_lb_only(0);
+  var<> slack_thermal_recourse_c("slack_thermal_recourse_c");
+  RSCED.add(slack_thermal_recourse_c.in(arcs_c));
+  slack_thermal_recourse_c.add_lb_only(0);
+
   /** Post-failure constraints */
-  /* REF BUS */
-  Constraint<> Ref_Bus_c("Ref_Bus_c");
-  Ref_Bus_c = theta_c.in(grid.ref_bus);
-  RSCED.add(Ref_Bus_c == 0);
+//  /* REF BUS */
+//  Constraint<> Ref_Bus_c("Ref_Bus_c");
+//  Ref_Bus_c = theta_c.in(grid.ref_bus);
+//  RSCED.add(Ref_Bus_c == 0);
 
   /* Power flow constraint */
   Constraint<> Flow_P_c("Flow_P_c");
@@ -266,34 +278,32 @@ int main(int argc, char *argv[]) {
 
   /* Power balance constraint */
   Constraint<> KCL_P_c("KCL_P_c");
-  KCL_P_c = sum(Pf_c, out_arcs_c) - sum(Pf_c, in_arcs_c) + pl_c + gs_c - sum(Pg, gen_nodes_c1);
+  KCL_P_c = sum(Pf_c, out_arcs_c) - sum(Pf_c, in_arcs_c) + pl_c - sum(Pg, gen_nodes_c1) + slack_kcl_c;
   RSCED.add(KCL_P_c.in(nodes_c) == 0);
 
   /* Phase Angle Bounds constraints */
   Constraint<> PAD_UB_c("PAD_UB_c");
   PAD_UB_c = theta_c.from_ith(0, node_pairs_c) - theta_c.in_ignore_ith(1, 1, node_pairs_c);
-  PAD_UB_c -= th_max.from_ith(1, node_pairs_c);
+  PAD_UB_c -= th_max.from_ith(1, node_pairs_c) + slack_pad_c;
   RSCED.add(PAD_UB_c.in(node_pairs_c) <= 0);
   Constraint<> PAD_LB_c("PAD_LB_c");
   PAD_LB_c = theta_c.from_ith(0, node_pairs_c) - theta_c.in_ignore_ith(1, 1, node_pairs_c);
-  PAD_LB_c -= th_min.from_ith(1, node_pairs_c);
+  PAD_LB_c -= th_min.from_ith(1, node_pairs_c) - slack_pad_c;
   RSCED.add(PAD_LB_c.in(node_pairs_c) >= 0);
 
   /* Line Limits constraints */
   Constraint<> Thermal_UB_c("Thermal_UB_c");
-  Thermal_UB_c = b_c * (theta_c.to(arcs_c) - theta_c.from(arcs_c));
-  Thermal_UB_c -= S_max_c * DAL_multiplier;
+  Thermal_UB_c = Pf_c - S_max_c * DAL_multiplier - slack_thermal_c;
   RSCED.add(Thermal_UB_c.in(arcs_c) <= 0);
   Constraint<> Thermal_LB_c("Thermal_LB_c");
-  Thermal_LB_c = b_c * (theta_c.to(arcs_c) - theta_c.from(arcs_c));
-  Thermal_LB_c += S_max_c * DAL_multiplier;
+  Thermal_LB_c = Pf_c + S_max_c * DAL_multiplier + slack_thermal_c;
   RSCED.add(Thermal_LB_c.in(arcs_c) >= 0);
 
   /** Post-recourse constraints */
-  /* REF BUS */
-  Constraint<> Ref_Bus_recourse_c("Ref_Bus_recourse_c");
-  Ref_Bus_recourse_c = theta_c.in(grid.ref_bus);
-  RSCED.add(Ref_Bus_recourse_c == 0);
+//  /* REF BUS */
+//  Constraint<> Ref_Bus_recourse_c("Ref_Bus_recourse_c");
+//  Ref_Bus_recourse_c = theta_c.in(grid.ref_bus);
+//  RSCED.add(Ref_Bus_recourse_c == 0);
 
   /* CVaR lower bound */
   Constraint<> OBJ_BOUND_c("OBJ_BOUND_c");
@@ -310,28 +320,28 @@ int main(int argc, char *argv[]) {
   /* Power balance constraint */
   Constraint<> KCL_P_recourse_c("KCL_P_recourse_c");
   KCL_P_recourse_c =
-      sum(Pf_recourse_c, out_arcs_c) - sum(Pf_recourse_c, in_arcs_c) + pl_c + gs_c - sum(Pg, gen_nodes_c1)
+      sum(Pf_recourse_c, out_arcs_c) - sum(Pf_recourse_c, in_arcs_c) + pl_c - sum(Pg, gen_nodes_c1)
           - sum(dPg_p, gen_nodes_c) + sum(dPg_n, gen_nodes_c) - dD_c;
   RSCED.add(KCL_P_recourse_c.in(nodes_c) == 0);
 
   /* Phase Angle Bounds constraints */
   Constraint<> PAD_UB_recourse_c("PAD_UB_recourse_c");
-  PAD_UB_c = theta_recourse_c.from_ith(0, node_pairs_c) - theta_recourse_c.in_ignore_ith(1, 1, node_pairs_c);
-  PAD_UB_c -= th_max.from_ith(1, node_pairs_c);
+  PAD_UB_recourse_c = theta_recourse_c.from_ith(0, node_pairs_c) - theta_recourse_c.in_ignore_ith(1, 1, node_pairs_c);
+  PAD_UB_recourse_c -= th_max.from_ith(1, node_pairs_c) + slack_pad_recourse_c;
   RSCED.add(PAD_UB_recourse_c.in(node_pairs_c) <= 0);
   Constraint<> PAD_LB_recourse_c("PAD_LB_recourse_c");
-  PAD_LB_c = theta_recourse_c.from_ith(0, node_pairs_c) - theta_recourse_c.in_ignore_ith(1, 1, node_pairs_c);
-  PAD_LB_c -= th_min.from_ith(1, node_pairs_c);
+  PAD_LB_recourse_c = theta_recourse_c.from_ith(0, node_pairs_c) - theta_recourse_c.in_ignore_ith(1, 1, node_pairs_c);
+  PAD_LB_recourse_c -= th_min.from_ith(1, node_pairs_c) - slack_pad_recourse_c;
   RSCED.add(PAD_LB_recourse_c.in(node_pairs_c) >= 0);
 
   /* Line Limits constraints */
   Constraint<> Thermal_UB_recourse_c("Thermal_UB_recourse_c");
-  Thermal_UB_recourse_c = b_c * (theta_recourse_c.to(arcs_c) - theta_recourse_c.from(arcs_c));
-  Thermal_UB_recourse_c -= S_max_c * STE_multiplier;
+  Thermal_UB_recourse_c = Pf_recourse_c;
+  Thermal_UB_recourse_c -= S_max_c * STE_multiplier + slack_thermal_recourse_c;
   RSCED.add(Thermal_UB_recourse_c.in(arcs_c) <= 0);
   Constraint<> Thermal_LB_recourse_c("Thermal_LB_recourse_c");
-  Thermal_LB_recourse_c = b_c * (theta_recourse_c.to(arcs_c) - theta_recourse_c.from(arcs_c));
-  Thermal_LB_recourse_c += S_max_c * STE_multiplier;
+  Thermal_LB_recourse_c = Pf_recourse_c;
+  Thermal_LB_recourse_c += S_max_c * STE_multiplier + slack_thermal_recourse_c;
   RSCED.add(Thermal_LB_recourse_c.in(arcs_c) >= 0);
 
   /* Generation capacity limits */
@@ -356,6 +366,9 @@ int main(int argc, char *argv[]) {
 
   /** Objective */
   obj += alpha_prime * failure_probability * sum(y_c, contingencies);
+  obj += 999999 * sum(slack_thermal_c, arcs_c) + 999999 * sum(slack_thermal_recourse_c, arcs_c)
+      + 999999 * sum(slack_pad_c, node_pairs_c) + 999999 * sum(slack_pad_recourse_c, node_pairs_c)
+      + 999999 * sum(slack_kcl_c, nodes_c);
 
   /* Set objective */
   RSCED.min(obj);
@@ -373,7 +386,7 @@ int main(int argc, char *argv[]) {
     RSCED_SOLVER = solver<>(RSCED, ipopt);
 
   auto solver_time_start = get_wall_time();
-  RSCED_SOLVER.run(output = 5, tol = 1e-6);
+  RSCED_SOLVER.run(output = 0, tol = 1e-6);
   solver_time_end = get_wall_time();
   total_time_end = get_wall_time();
   solve_time = solver_time_end - solver_time_start;
