@@ -47,16 +47,19 @@ namespace gravity {
         /*These should eventually be shared_ptr<int>, or an object with an access to get_id_inst, or eval */
         shared_ptr<int> _num_partns;/*number of partitons*/
         int _cur_partn = 1;/*current partition we are focused on*/
-        
-        
+        int _problem = -1;/*problem number for decomposed problems (0-master, >0-subproblem index)*/
+
+
         /* Constructors */
         //@{
         /** Unbounded variable constructor */
-        var(){};
+        var() {};
+
         ~var() {};
+
         template<typename T=type,
-        typename std::enable_if<is_arithmetic<T>::value>::type* = nullptr>
-        var(const string& name){
+                typename std::enable_if<is_arithmetic<T>::value>::type * = nullptr>
+        var(const string &name) {
             constant_::set_type(var_c);
             this->_name = name;
             _num_partns = make_shared<int>(1);
@@ -1150,7 +1153,6 @@ namespace gravity {
         bool is_lifted() const{return _lift;};
         bool get_in_SOC_partn() const{return _in_SOC_partn;};
         void set_in_SOC_partn(bool in_SOC_partn) {this->_in_SOC_partn = in_SOC_partn;};
-        
     };
     
     var<Cpx> conj(const var<Cpx>& p);
