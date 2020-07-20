@@ -66,74 +66,76 @@ func<double> gravity::createContingencyModel(Model<> &model, PowerNet &grid,
     /** Variable definition */
     /* Positive recourse generation */
     var<> dPg_p("dPg_p" + subscript);
+    model.add(dPg_p.in(gens));
     dPg_p.add_lb_only(0);
     dPg_p._problem = subproblem;
-    model.add(dPg_p.in(gens));
 
     /* Negative recourse generation */
     var<> dPg_n("dPg_n" + subscript);
+    model.add(dPg_n.in(gens));
     dPg_n.add_lb_only(0);
     dPg_n._problem = subproblem;
-    model.add(dPg_n.in(gens));
 
     /* Power flows */
     var<> Pf_c("Pf_c" + subscript);
-    Pf_c._problem = subproblem;
     model.add(Pf_c.in(arcs));
+    Pf_c._problem = subproblem;
+
     var<> Pf_recourse_c("Pf_recourse_c" + subscript);
-    Pf_recourse_c._problem = subproblem;
     model.add(Pf_recourse_c.in(arcs));
+    Pf_recourse_c._problem = subproblem;
 
     /* Phase angle variables */
     var<> theta_c("theta_c" + subscript);
-    theta_c._problem = subproblem;
     model.add(theta_c.in(nodes));
+    theta_c._problem = subproblem;
+
     var<> theta_recourse_c("theta_recourse_c" + subscript);
-    theta_recourse_c._problem = subproblem;
     model.add(theta_recourse_c.in(nodes));
+    theta_recourse_c._problem = subproblem;
 
     /* Load shed variables */
     var<> dD_c("dD_c" + subscript);
+    model.add(dD_c.in(nodes));
     dD_c.set_lb(0);
     dD_c._problem = subproblem;
-    model.add(dD_c.in(nodes));
 
     /* CVaR reformulation variable */
     var<> y_c("y_c" + subscript);
+    model.add(y_c);
     y_c.add_lb_only(0);
     y_c._problem = subproblem;
-    model.add(y_c);
 
     /* Slack variables */
     var<> slack_kcl_p_c("slack_kcl_p_c" + subscript);
+    model.add(slack_kcl_p_c.in(nodes));
     slack_kcl_p_c.add_lb_only(0);
     slack_kcl_p_c._problem = subproblem;
-    model.add(slack_kcl_p_c.in(nodes));
 
     var<> slack_kcl_n_c("slack_kcl_n_c" + subscript);
+    model.add(slack_kcl_n_c.in(nodes));
     slack_kcl_n_c.add_lb_only(0);
     slack_kcl_n_c._problem = subproblem;
-    model.add(slack_kcl_n_c.in(nodes));
 
     var<> slack_pad_c("slack_pad_c" + subscript);
+    model.add(slack_pad_c.in(node_pairs));
     slack_pad_c.add_lb_only(0);
     slack_pad_c._problem = subproblem;
-    model.add(slack_pad_c.in(node_pairs));
 
     var<> slack_pad_recourse_c("slack_pad_recourse_c" + subscript);
+    model.add(slack_pad_recourse_c.in(node_pairs));
     slack_pad_recourse_c.add_lb_only(0);
     slack_pad_recourse_c._problem = subproblem;
-    model.add(slack_pad_recourse_c.in(node_pairs));
 
     var<> slack_thermal_c("slack_thermal_c" + subscript);
+    model.add(slack_thermal_c.in(arcs));
     slack_thermal_c.add_lb_only(0);
     slack_thermal_c._problem = subproblem;
-    model.add(slack_thermal_c.in(arcs));
 
     var<> slack_thermal_recourse_c("slack_thermal_recourse_c" + subscript);
+    model.add(slack_thermal_recourse_c.in(arcs));
     slack_thermal_recourse_c.add_lb_only(0);
     slack_thermal_recourse_c._problem = subproblem;
-    model.add(slack_thermal_recourse_c.in(arcs));
 
     /** Post-failure constraints */
     /* Power flow constraint */

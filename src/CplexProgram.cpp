@@ -221,10 +221,12 @@ void CplexProgram::fill_in_cplex_vars() {
 
     _cplex_vars.resize(_model->_vars.size());
     unsigned vid = 0;
+    int problem_num = -1;
 
     IloCplex::LongAnnotation benders = cplex.newLongAnnotation(IloCplex::BendersAnnotation);
     bool master_specified = false;
     bool subproblems_specified = false;
+
     for (auto &v_p: _model->_vars) {
         auto v = v_p.second;
 //        if (!v->_new) {
@@ -232,6 +234,7 @@ void CplexProgram::fill_in_cplex_vars() {
 //        }
         v->_new = false;
         vid = v->get_vec_id();
+        problem_num = -1;
         switch (v->get_intype()) {
             case float_: {
                 auto real_var = (var<float> *) v.get();
@@ -243,14 +246,7 @@ void CplexProgram::fill_in_cplex_vars() {
                 }
 
                 _cplex_vars.at(vid) = IloNumVarArray(*_cplex_env, lb, ub);
-
-                // Set decomposition problem if available
-                if (real_var->_problem >= 0) {
-                    if (real_var->_problem == 0) master_specified = true;
-                    if (real_var->_problem > 0) subproblems_specified = true;
-                    for (int i = 0; i < v->get_dim(); i++)
-                        cplex.setAnnotation(benders, _cplex_vars.at(vid)[i], real_var->_problem);
-                }
+                problem_num = real_var->_problem;
                 break;
             }
         case long_: {
@@ -262,6 +258,7 @@ void CplexProgram::fill_in_cplex_vars() {
                 ub[i] = real_var->get_ub(i);
             }
             _cplex_vars.at(vid) = IloNumVarArray(*_cplex_env,lb,ub);
+            problem_num = real_var->_problem;
             break;
         }
         case double_: {
@@ -289,13 +286,7 @@ void CplexProgram::fill_in_cplex_vars() {
 //            }
 //            cout << endl;
 
-            // Set decomposition problem if available
-            if (real_var->_problem >= 0) {
-                if (real_var->_problem == 0) master_specified = true;
-                if (real_var->_problem > 0) subproblems_specified = true;
-                for (int i = 0; i < v->get_dim(); i++)
-                    cplex.setAnnotation(benders, _cplex_vars.at(vid)[i], real_var->_problem);
-            }
+            problem_num = real_var->_problem;
             break;
         }
         case integer_: {
@@ -307,6 +298,7 @@ void CplexProgram::fill_in_cplex_vars() {
                 ub[i] = real_var->get_ub(i);
             }
             _cplex_vars.at(vid) = IloNumVarArray(*_cplex_env,lb,ub, ILOINT);
+            problem_num = real_var->_problem;
 //            for (int i = 0; i < real_var->get_dim(); i++) {
 //                cout << real_var->_indices->_keys->at(i) << " : ";
 //                cout << to_string(_cplex_vars.at(vid)[i].getId()) << " in [";
@@ -324,11 +316,13 @@ void CplexProgram::fill_in_cplex_vars() {
                 ub[i] = real_var->get_ub(i);
             }
             _cplex_vars.at(vid) = IloNumVarArray(*_cplex_env,lb,ub, ILOINT);
+            problem_num = real_var->_problem;
             break;
         }
         case binary_: {
             _cplex_vars.at(vid) = IloNumVarArray(*_cplex_env,ILOBOOL);
             _cplex_vars.at(vid).setSize(v->get_dim());
+            problem_num = ((var<bool>*)v.get())->_problem;
             break;
         }
         default:
@@ -336,6 +330,15 @@ void CplexProgram::fill_in_cplex_vars() {
         }
         for (int i = 0; i < v->get_dim(); i++) {
             _cplex_vars.at(vid)[i].setName(v->get_name(i).c_str());
+        }
+
+        DebugOn(v->_name + ": " + std::to_string(problem_num));
+        // Set decomposition problem if available
+        if (problem_num >= 0) {
+            if (problem_num == 0) master_specified = true;
+            if (problem_num > 0) subproblems_specified = true;
+            for (int i = 0; i < v->get_dim(); i++)
+                cplex.setAnnotation(benders, _cplex_vars.at(vid)[i], problem_num);
         }
     }
 
@@ -345,14 +348,15 @@ void CplexProgram::fill_in_cplex_vars() {
         cplex.setParam(IloCplex::BendersStrategy, IloCplex::BendersUser);
     else
         cplex.setParam(IloCplex::BendersStrategy, IloCplex::BendersAuto);
-    cplex.setParam(IloCplex::BendersStrategy, IloCplex::BendersOff);
     DebugOn("Benders strategy: " + std::to_string(cplex.getParam(IloCplex::BendersStrategy)));
+    DebugOn("Master specified: " + std::to_string(master_specified));
+    DebugOn("Subproblems specified: " + std::to_string(subproblems_specified));
 }
 
 void CplexProgram::set_cplex_objective() {
-//    if (!_model->_obj->_new) {
-//        return;//Objective already added to the program
-//    }
+    if (!_model->_obj->_new) {
+        return;//Objective already added to the program
+    }
     _model->_obj->_new = false;
     size_t idx = 0, idx_inst = 0, idx1 = 0, idx2 = 0, idx_inst1 = 0, idx_inst2 = 0;
     IloNumExpr obj(*_cplex_env);

@@ -157,21 +157,21 @@ int main(int argc, char *argv[]) {
   Constraint<> PAD_UB("PAD_UB");
   PAD_UB = theta.from(node_pairs) - theta.to(node_pairs);
   PAD_UB -= th_max;
-  RSCED.add(PAD_UB.in(node_pairs) <= 0);
+  RSCED.add_lazy(PAD_UB.in(node_pairs) <= 0);
   Constraint<> PAD_LB("PAD_LB");
   PAD_LB = theta.from(node_pairs) - theta.to(node_pairs);
   PAD_LB -= th_min;
-  RSCED.add(PAD_LB.in(node_pairs) >= 0);
+  RSCED.add_lazy(PAD_LB.in(node_pairs) >= 0);
 
   /* Line Limits constraints */
   Constraint<> Thermal_UB("Thermal_UB");
   Thermal_UB = b * (theta.to(arcs) - theta.from(arcs));
   Thermal_UB -= S_max;
-  RSCED.add(Thermal_UB.in(arcs) <= 0);
+  RSCED.add_lazy(Thermal_UB.in(arcs) <= 0);
   Constraint<> Thermal_LB("Thermal_LB");
   Thermal_LB = b * (theta.to(arcs) - theta.from(arcs));
   Thermal_LB += S_max;
-  RSCED.add(Thermal_LB.in(arcs) >= 0);
+  RSCED.add_lazy(Thermal_LB.in(arcs) >= 0);
 
   /** Objective */
   auto obj = z + alpha_prime * (1 - nb_lines * failure_probability) * y;
@@ -291,19 +291,19 @@ int main(int argc, char *argv[]) {
   Constraint<> PAD_UB_c("PAD_UB_c");
   PAD_UB_c = theta_c.from_ith(0, node_pairs_c) - theta_c.in_ignore_ith(1, 1, node_pairs_c);
   PAD_UB_c -= th_max.from_ith(1, node_pairs_c) + slack_pad_c;
-  RSCED.add(PAD_UB_c.in(node_pairs_c) <= 0);
+  RSCED.add_lazy(PAD_UB_c.in(node_pairs_c) <= 0);
   Constraint<> PAD_LB_c("PAD_LB_c");
   PAD_LB_c = theta_c.from_ith(0, node_pairs_c) - theta_c.in_ignore_ith(1, 1, node_pairs_c);
   PAD_LB_c -= th_min.from_ith(1, node_pairs_c) - slack_pad_c;
-  RSCED.add(PAD_LB_c.in(node_pairs_c) >= 0);
+  RSCED.add_lazy(PAD_LB_c.in(node_pairs_c) >= 0);
 
   /* Line Limits constraints */
   Constraint<> Thermal_UB_c("Thermal_UB_c");
   Thermal_UB_c = Pf_c - S_max_c * DAL_multiplier - slack_thermal_c;
-  RSCED.add(Thermal_UB_c.in(arcs_c) <= 0);
+  RSCED.add_lazy(Thermal_UB_c.in(arcs_c) <= 0);
   Constraint<> Thermal_LB_c("Thermal_LB_c");
   Thermal_LB_c = Pf_c + S_max_c * DAL_multiplier + slack_thermal_c;
-  RSCED.add(Thermal_LB_c.in(arcs_c) >= 0);
+  RSCED.add_lazy(Thermal_LB_c.in(arcs_c) >= 0);
 
   /** Post-recourse constraints */
 //  /* REF BUS */
@@ -334,41 +334,41 @@ int main(int argc, char *argv[]) {
   Constraint<> PAD_UB_recourse_c("PAD_UB_recourse_c");
   PAD_UB_recourse_c = theta_recourse_c.from_ith(0, node_pairs_c) - theta_recourse_c.in_ignore_ith(1, 1, node_pairs_c);
   PAD_UB_recourse_c -= th_max.from_ith(1, node_pairs_c) + slack_pad_recourse_c;
-  RSCED.add(PAD_UB_recourse_c.in(node_pairs_c) <= 0);
+  RSCED.add_lazy(PAD_UB_recourse_c.in(node_pairs_c) <= 0);
   Constraint<> PAD_LB_recourse_c("PAD_LB_recourse_c");
   PAD_LB_recourse_c = theta_recourse_c.from_ith(0, node_pairs_c) - theta_recourse_c.in_ignore_ith(1, 1, node_pairs_c);
   PAD_LB_recourse_c -= th_min.from_ith(1, node_pairs_c) - slack_pad_recourse_c;
-  RSCED.add(PAD_LB_recourse_c.in(node_pairs_c) >= 0);
+  RSCED.add_lazy(PAD_LB_recourse_c.in(node_pairs_c) >= 0);
 
   /* Line Limits constraints */
   Constraint<> Thermal_UB_recourse_c("Thermal_UB_recourse_c");
   Thermal_UB_recourse_c = Pf_recourse_c;
   Thermal_UB_recourse_c -= S_max_c * STE_multiplier + slack_thermal_recourse_c;
-  RSCED.add(Thermal_UB_recourse_c.in(arcs_c) <= 0);
+  RSCED.add_lazy(Thermal_UB_recourse_c.in(arcs_c) <= 0);
   Constraint<> Thermal_LB_recourse_c("Thermal_LB_recourse_c");
   Thermal_LB_recourse_c = Pf_recourse_c;
   Thermal_LB_recourse_c += S_max_c * STE_multiplier + slack_thermal_recourse_c;
-  RSCED.add(Thermal_LB_recourse_c.in(arcs_c) >= 0);
+  RSCED.add_lazy(Thermal_LB_recourse_c.in(arcs_c) >= 0);
 
   /* Generation capacity limits */
   Constraint<> Gen_UB_c("Gen_recourse_UB_c");
   Gen_UB_c = Pg_nom + dPg_p - dPg_n;
   Gen_UB_c -= pg_max_c;
-  RSCED.add(Gen_UB_c.in(gens_c) <= 0);
+  RSCED.add_lazy(Gen_UB_c.in(gens_c) <= 0);
   Constraint<> Gen_LB_c("Gen_recourse_LB_c");
   Gen_LB_c = Pg_nom + dPg_p - dPg_n;
   Gen_LB_c += pg_min_c;
-  RSCED.add(Gen_LB_c.in(gens_c) >= 0);
+  RSCED.add_lazy(Gen_LB_c.in(gens_c) >= 0);
 
   /* Recourse ramp capacity limits */
   Constraint<> Recourse_UB_c("Recourse_UB_c");
   Recourse_UB_c = dPg_p - dPg_n;
   Recourse_UB_c -= ramp_max_c;
-  RSCED.add(Recourse_UB_c.in(gens_c) <= 0);
+  RSCED.add_lazy(Recourse_UB_c.in(gens_c) <= 0);
   Constraint<> Recourse_LB_c("Recourse_LB_c");
   Recourse_LB_c = dPg_p - dPg_n;
   Recourse_LB_c += ramp_max_c;
-  RSCED.add(Recourse_LB_c.in(gens_c) >= 0);
+  RSCED.add_lazy(Recourse_LB_c.in(gens_c) >= 0);
 
   /** Objective */
   obj += alpha_prime * failure_probability * sum(y_c, contingencies);

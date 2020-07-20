@@ -414,6 +414,7 @@ namespace gravity {
                 auto imag_var = static_pointer_cast<var<>>(res._imag);
                 res._imag = make_shared<var<>>(imag_var->in(*res._indices));
             }
+            res._problem = _problem;
             return res;
         }
         
