@@ -47,7 +47,8 @@ namespace gravity {
         /*These should eventually be shared_ptr<int>, or an object with an access to get_id_inst, or eval */
         shared_ptr<int> _num_partns;/*number of partitons*/
         int _cur_partn = 1;/*current partition we are focused on*/
-        int _problem = -1;/*problem number for decomposed problems (0-master, >0-subproblem index)*/
+        shared_ptr<int> _problem = std::make_shared<int>(
+                -1);/*problem number for decomposed problems (0-master, >0-subproblem index)*/
 
 
         /* Constructors */
@@ -1144,16 +1145,33 @@ namespace gravity {
         
         template<typename T=type, typename enable_if<is_arithmetic<T>::value && is_convertible<T, double>::value>::type* = nullptr>
         double get_double_ub_(size_t i) const{return _ub->eval(i);};
-        
+
         // should fix this by considering get_id_inst(i), but in that case _num_partns should be at least a param object
-        
-        int get_num_partns() const{ return *_num_partns;};
-        int get_cur_partn() const{ return _cur_partn;};
-        
-        vector<shared_ptr<param_>> get_original_vars(){vector<shared_ptr<param_>> res; res.push_back(_original_vars[0]); res.push_back(_original_vars[1]); return res;};
-        bool is_lifted() const{return _lift;};
-        bool get_in_SOC_partn() const{return _in_SOC_partn;};
-        void set_in_SOC_partn(bool in_SOC_partn) {this->_in_SOC_partn = in_SOC_partn;};
+
+        int get_num_partns() const { return *_num_partns; };
+
+        int get_cur_partn() const { return _cur_partn; };
+
+        vector<shared_ptr<param_>> get_original_vars() {
+            vector<shared_ptr<param_>> res;
+            res.push_back(_original_vars[0]);
+            res.push_back(_original_vars[1]);
+            return res;
+        };
+
+        bool is_lifted() const { return _lift; };
+
+        bool get_in_SOC_partn() const { return _in_SOC_partn; };
+
+        void set_in_SOC_partn(bool in_SOC_partn) { this->_in_SOC_partn = in_SOC_partn; };
+
+        void set_problem(int problem) {
+            *_problem = problem;
+        }
+
+        int get_problem() {
+            return *_problem;
+        }
     };
     
     var<Cpx> conj(const var<Cpx>& p);

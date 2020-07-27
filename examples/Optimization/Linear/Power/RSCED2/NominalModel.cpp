@@ -45,12 +45,12 @@ gravity::createNominalModel(Model<> &model, PowerNet &grid, const RSCEDdata &dat
     /* Power generation variables */
     var<> Pg("Pg", pg_min, pg_max);
     model.add(Pg.in(gens));
-    Pg._problem = 0;
+    Pg.set_problem(0);
 
     /* Phase angle variables */
     var<> theta("𝛉");
     model.add(theta.in(nodes));
-    theta._problem = 0;
+    theta.set_problem(0);
 
     /* CVaR reformulation variable */
     // y0, z0(?)
@@ -60,8 +60,8 @@ gravity::createNominalModel(Model<> &model, PowerNet &grid, const RSCEDdata &dat
     y.add_lb_only(0);
     model.add(z);
     model.add(y);
-    z._problem = 0;
-    y._problem = 0;
+    z.set_problem(0);
+    y.set_problem(0);
 
     /** Constraints */
     /* CVaR lower bound */
