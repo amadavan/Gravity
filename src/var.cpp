@@ -48,7 +48,7 @@ var<type> var<type>::deep_copy() const{
     res._lb->deep_copy(*_lb);
     res._ub->deep_copy(*_ub);
     res._lift=_lift;
-    res._problem = _problem;
+    res._problem = make_shared<int>(*_problem);
     return res;
 }
 

@@ -50,6 +50,7 @@ public:
     void relax_model();
     void warm_start();
     void fill_in_cplex_vars();
+    void annotate_vars();
     void create_cplex_constraints();
     void set_cplex_objective();
     void create_callback();
