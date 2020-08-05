@@ -152,19 +152,19 @@ func<double> gravity::createContingencyModel(Model<> &model, PowerNet &grid,
     Constraint<> PAD_UB_c("PAD_UB_c" + subscript);
     PAD_UB_c = theta_c.from(node_pairs) - theta_c.to(node_pairs);
     PAD_UB_c -= th_max.in(node_pairs) + slack_pad_c;
-    model.add_lazy(PAD_UB_c.in(node_pairs) <= 0);
+    model.add(PAD_UB_c.in(node_pairs) <= 0);
     Constraint<> PAD_LB_c("PAD_LB_c" + subscript);
     PAD_LB_c = theta_c.from(node_pairs) - theta_c.to(node_pairs);
     PAD_LB_c -= th_min.in(node_pairs) - slack_pad_c;
-    model.add_lazy(PAD_LB_c.in(node_pairs) >= 0);
+    model.add(PAD_LB_c.in(node_pairs) >= 0);
 
     /* Line Limits constraints */
     Constraint<> Thermal_UB_c("Thermal_UB_c" + subscript);
     Thermal_UB_c = Pf_c - S_max * data.DAL_multiplier - slack_thermal_c;
-    model.add_lazy(Thermal_UB_c.in(arcs) <= 0);
+    model.add(Thermal_UB_c.in(arcs) <= 0);
     Constraint<> Thermal_LB_c("Thermal_LB_c" + subscript);
     Thermal_LB_c = Pf_c + S_max * data.DAL_multiplier + slack_thermal_c;
-    model.add_lazy(Thermal_LB_c.in(arcs) >= 0);
+    model.add(Thermal_LB_c.in(arcs) >= 0);
 
     /** Post-recourse constraints */
     /* CVaR lower bound */
@@ -188,41 +188,41 @@ func<double> gravity::createContingencyModel(Model<> &model, PowerNet &grid,
     Constraint<> PAD_UB_recourse_c("PAD_UB_recourse_c" + subscript);
     PAD_UB_recourse_c = theta_recourse_c.from(node_pairs) - theta_recourse_c.to(node_pairs);
     PAD_UB_recourse_c -= th_max.in(node_pairs) + slack_pad_recourse_c;
-    model.add_lazy(PAD_UB_recourse_c.in(node_pairs) <= 0);
+    model.add(PAD_UB_recourse_c.in(node_pairs) <= 0);
     Constraint<> PAD_LB_recourse_c("PAD_LB_recourse_c" + subscript);
     PAD_LB_recourse_c = theta_recourse_c.from(node_pairs) - theta_recourse_c.to(node_pairs);
     PAD_LB_recourse_c -= th_min.in(node_pairs) - slack_pad_recourse_c;
-    model.add_lazy(PAD_LB_recourse_c.in(node_pairs) >= 0);
+    model.add(PAD_LB_recourse_c.in(node_pairs) >= 0);
 
     /* Line Limits constraints */
     Constraint<> Thermal_UB_recourse_c("Thermal_UB_recourse_c" + subscript);
     Thermal_UB_recourse_c = Pf_recourse_c;
     Thermal_UB_recourse_c -= S_max * data.STE_multiplier + slack_thermal_recourse_c;
-    model.add_lazy(Thermal_UB_recourse_c.in(arcs) <= 0);
+    model.add(Thermal_UB_recourse_c.in(arcs) <= 0);
     Constraint<> Thermal_LB_recourse_c("Thermal_LB_recourse_c" + subscript);
     Thermal_LB_recourse_c = Pf_recourse_c;
     Thermal_LB_recourse_c += S_max * data.STE_multiplier + slack_thermal_recourse_c;
-    model.add_lazy(Thermal_LB_recourse_c.in(arcs) >= 0);
+    model.add(Thermal_LB_recourse_c.in(arcs) >= 0);
 
     /* Generation capacity limits */
     Constraint<> Gen_UB_c("Gen_recourse_UB_c" + subscript);
     Gen_UB_c = Pg + dPg_p - dPg_n;
     Gen_UB_c -= pg_max;
-    model.add_lazy(Gen_UB_c.in(gens) <= 0);
+    model.add(Gen_UB_c.in(gens) <= 0);
     Constraint<> Gen_LB_c("Gen_recourse_LB_c" + subscript);
     Gen_LB_c = Pg + dPg_p - dPg_n;
     Gen_LB_c += pg_min;
-    model.add_lazy(Gen_LB_c.in(gens) >= 0);
+    model.add(Gen_LB_c.in(gens) >= 0);
 
     /* Recourse ramp capacity limits */
     Constraint<> Recourse_UB_c("Recourse_UB_c" + subscript);
     Recourse_UB_c = dPg_p - dPg_n;
     Recourse_UB_c -= data.ramp_max;
-    model.add_lazy(Recourse_UB_c.in(gens) <= 0);
+    model.add(Recourse_UB_c.in(gens) <= 0);
     Constraint<> Recourse_LB_c("Recourse_LB_c" + subscript);
     Recourse_LB_c = dPg_p - dPg_n;
     Recourse_LB_c += data.ramp_max;
-    model.add_lazy(Recourse_LB_c.in(gens) >= 0);
+    model.add(Recourse_LB_c.in(gens) >= 0);
 
     /** Objective */
     func<double> obj = alpha_prime * data.failure_probability * y_c;

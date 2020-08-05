@@ -84,21 +84,21 @@ gravity::createNominalModel(Model<> &model, PowerNet &grid, const RSCEDdata &dat
     Constraint<> PAD_UB("PAD_UB");
     PAD_UB = theta.from(node_pairs) - theta.to(node_pairs);
     PAD_UB -= th_max;
-    model.add_lazy(PAD_UB.in(node_pairs) <= 0);
+    model.add(PAD_UB.in(node_pairs) <= 0);
     Constraint<> PAD_LB("PAD_LB");
     PAD_LB = theta.from(node_pairs) - theta.to(node_pairs);
     PAD_LB -= th_min;
-    model.add_lazy(PAD_LB.in(node_pairs) >= 0);
+    model.add(PAD_LB.in(node_pairs) >= 0);
 
     /* Line Limits constraints */
     Constraint<> Thermal_UB("Thermal_UB");
     Thermal_UB = b * (theta.to(arcs) - theta.from(arcs));
     Thermal_UB -= S_max;
-    model.add_lazy(Thermal_UB.in(arcs) <= 0);
+    model.add(Thermal_UB.in(arcs) <= 0);
     Constraint<> Thermal_LB("Thermal_LB");
     Thermal_LB = b * (theta.to(arcs) - theta.from(arcs));
     Thermal_LB += S_max;
-    model.add_lazy(Thermal_LB.in(arcs) >= 0);
+    model.add(Thermal_LB.in(arcs) >= 0);
 
     /** Objective */
     func<double> obj = z + alpha_prime * (1 - nb_lines * data.failure_probability) * y;

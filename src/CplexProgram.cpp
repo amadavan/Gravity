@@ -148,6 +148,8 @@ bool CplexProgram::solve(bool relax, double mipgap) {
         cplex.setParam(IloCplex::EpGap, 1e-6 ); //stopping criterion MIPgap
 //        cplex.setParam(IloCplex::PreInd, 1);
 //        cplex.setParam(IloCplex::MIPDisplay, 2);
+
+        cplex.setParam(IloCplex::Param::Barrier::ConvergeTol, 1e-6);
         
 //        cplex.setParam(IloCplex::Param::MIP::Strategy::RINSHeur, 50); //relaxation induced neighbourhood search frequency
 //        cplex.setParam(IloCplex::Param::Emphasis::MIP, 4); //mip emphasis on finding feasible(hidden) solutions first ******* USE 0 or 4 as the setting ********
@@ -264,7 +266,7 @@ void CplexProgram::annotate_vars() {
             default:
                 break;
         }
-        DebugOn(v->_name + ": " + std::to_string(problem_num) << endl);
+//        DebugOn(v->_name + ": " + std::to_string(problem_num) << endl);
         // Set decomposition problem if available
         if (problem_num >= 0) {
             if (problem_num == 0) master_specified = true;
@@ -276,15 +278,15 @@ void CplexProgram::annotate_vars() {
             }
         }
     }
-    if (master_specified && !subproblems_specified)
-        cplex.setParam(IloCplex::BendersStrategy, IloCplex::BendersWorkers);
-    else if (master_specified && subproblems_specified)
-        cplex.setParam(IloCplex::BendersStrategy, IloCplex::BendersUser);
-    else
-        cplex.setParam(IloCplex::BendersStrategy, IloCplex::BendersAuto);
-    DebugOn("Benders strategy: " << cplex.getParam(IloCplex::BendersStrategy) << endl);
-    DebugOn("Master specified: " << master_specified << endl);
-    DebugOn("Subproblems specified: " << subproblems_specified << endl);
+//    if (master_specified && !subproblems_specified)
+//        cplex.setParam(IloCplex::BendersStrategy, IloCplex::BendersWorkers);
+//    else if (master_specified && subproblems_specified)
+//        cplex.setParam(IloCplex::BendersStrategy, IloCplex::BendersUser);
+//    else
+//        cplex.setParam(IloCplex::BendersStrategy, IloCplex::BendersAuto);
+//    DebugOn("Benders strategy: " << cplex.getParam(IloCplex::BendersStrategy) << endl);
+//    DebugOn("Master specified: " << master_specified << endl);
+//    DebugOn("Subproblems specified: " << subproblems_specified << endl);
 }
 
 void CplexProgram::fill_in_cplex_vars() {
