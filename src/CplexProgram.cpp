@@ -53,90 +53,90 @@ bool CplexProgram::solve(bool relax, double mipgap) {
         else {
             cplex.extract(*_cplex_model);
         }
-        size_t idx = 0, idx_inst = 0, idx1 = 0, idx2 = 0, idx_inst1 = 0, idx_inst2 = 0, nb_inst = 0, inst = 0;
-    //    size_t c_idx_inst = 0;
-        Constraint<>* c;
-        for(auto& p: _model->_cons) {
-            c = p.second.get();
-            if(!*c->_all_lazy){
-                continue;
-            }
-    //        if (!c->_new) {
-    //            continue;//Constraint already added to the program
-    //        }
-            c->_new = false;
-            if (c->is_nonlinear()) {
-                throw invalid_argument("Cplex cannot handle nonlinear constraints that are not convex quadratic.\n");
-            }
-            nb_inst = c->get_nb_instances();
-            inst = 0;
-            for (size_t i = 0; i< nb_inst; i++) {
-                IloNumExpr cc(*_cplex_env);
-                for (auto& it_qterm: c->get_qterms()) {
-                    IloNumExpr qterm(*_cplex_env);
-                    idx1 = it_qterm.second._p->first->get_vec_id();
-                    idx2 = it_qterm.second._p->second->get_vec_id();
-                    if (it_qterm.second._p->first->_is_vector) {
-                        auto dim = it_qterm.second._p->first->get_dim(i);
-                        for (size_t j = 0; j<dim; j++) {
-                            qterm += c->eval(it_qterm.second._coef,i,j)*_cplex_vars[idx1][it_qterm.second._p->first->get_id_inst(i,j)]*_cplex_vars[idx2][it_qterm.second._p->second->get_id_inst(i,j)];
-                        }
-                    }
-                    else {
-                        idx_inst1 = it_qterm.second._p->first->get_id_inst(inst);
-                        idx_inst2 = it_qterm.second._p->second->get_id_inst(inst);
-                        qterm += c->eval(it_qterm.second._coef, inst)*_cplex_vars[idx1][idx_inst1]*_cplex_vars[idx2][idx_inst2];
-                    }
-                    if (!it_qterm.second._sign) {
-                        qterm *= -1;
-                    }
-                    cc += qterm;
-                    qterm.end();
-                }
-
-                for (auto& it_lterm: c->get_lterms()) {
-                    IloNumExpr lterm(*_cplex_env);
-                    idx = it_lterm.second._p->get_vec_id();
-                    if (it_lterm.second._p->_is_vector || it_lterm.second._p->is_matrix_indexed() || it_lterm.second._coef->is_matrix()) {
-                        auto dim = it_lterm.second._p->get_dim(i);
-                        for (int j = 0; j<dim; j++) {
-                            lterm += c->eval(it_lterm.second._coef,i,j)*_cplex_vars[idx][it_lterm.second._p->get_id_inst(i,j)];
-                        }
-                    }
-                    else {
-                        idx_inst = it_lterm.second._p->get_id_inst(inst);
-                        lterm += c->eval(it_lterm.second._coef, inst)*_cplex_vars[idx][idx_inst];
-                    }
-                    if (!it_lterm.second._sign) {
-                        lterm *= -1;
-                    }
-                    cc += lterm;
-                    lterm.end();
-                }
-                cc += c->eval(c->get_cst(), inst);
-
-
-                if(c->get_ctype()==geq) {
-                    IloConstraint c_(cc >= 0);
-                    c_.setName(c->_name.c_str());
-                    cplex.addLazyConstraint(c_);
-                }
-                else if(c->get_ctype()==leq) {
-                    IloConstraint c_(cc <= 0);
-                    c_.setName(c->_name.c_str());
-    //                _cplex_model->addLazyConstraint(c_);
-                    cplex.addLazyConstraint(c_);
-                }
-                inst++;
-            }
-        }
+//        size_t idx = 0, idx_inst = 0, idx1 = 0, idx2 = 0, idx_inst1 = 0, idx_inst2 = 0, nb_inst = 0, inst = 0;
+//    //    size_t c_idx_inst = 0;
+//        Constraint<>* c;
+//        for(auto& p: _model->_cons) {
+//            c = p.second.get();
+//            if(!*c->_all_lazy){
+//                continue;
+//            }
+//    //        if (!c->_new) {
+//    //            continue;//Constraint already added to the program
+//    //        }
+//            c->_new = false;
+//            if (c->is_nonlinear()) {
+//                throw invalid_argument("Cplex cannot handle nonlinear constraints that are not convex quadratic.\n");
+//            }
+//            nb_inst = c->get_nb_instances();
+//            inst = 0;
+//            for (size_t i = 0; i< nb_inst; i++) {
+//                IloNumExpr cc(*_cplex_env);
+//                for (auto& it_qterm: c->get_qterms()) {
+//                    IloNumExpr qterm(*_cplex_env);
+//                    idx1 = it_qterm.second._p->first->get_vec_id();
+//                    idx2 = it_qterm.second._p->second->get_vec_id();
+//                    if (it_qterm.second._p->first->_is_vector) {
+//                        auto dim = it_qterm.second._p->first->get_dim(i);
+//                        for (size_t j = 0; j<dim; j++) {
+//                            qterm += c->eval(it_qterm.second._coef,i,j)*_cplex_vars[idx1][it_qterm.second._p->first->get_id_inst(i,j)]*_cplex_vars[idx2][it_qterm.second._p->second->get_id_inst(i,j)];
+//                        }
+//                    }
+//                    else {
+//                        idx_inst1 = it_qterm.second._p->first->get_id_inst(inst);
+//                        idx_inst2 = it_qterm.second._p->second->get_id_inst(inst);
+//                        qterm += c->eval(it_qterm.second._coef, inst)*_cplex_vars[idx1][idx_inst1]*_cplex_vars[idx2][idx_inst2];
+//                    }
+//                    if (!it_qterm.second._sign) {
+//                        qterm *= -1;
+//                    }
+//                    cc += qterm;
+//                    qterm.end();
+//                }
+//
+//                for (auto& it_lterm: c->get_lterms()) {
+//                    IloNumExpr lterm(*_cplex_env);
+//                    idx = it_lterm.second._p->get_vec_id();
+//                    if (it_lterm.second._p->_is_vector || it_lterm.second._p->is_matrix_indexed() || it_lterm.second._coef->is_matrix()) {
+//                        auto dim = it_lterm.second._p->get_dim(i);
+//                        for (int j = 0; j<dim; j++) {
+//                            lterm += c->eval(it_lterm.second._coef,i,j)*_cplex_vars[idx][it_lterm.second._p->get_id_inst(i,j)];
+//                        }
+//                    }
+//                    else {
+//                        idx_inst = it_lterm.second._p->get_id_inst(inst);
+//                        lterm += c->eval(it_lterm.second._coef, inst)*_cplex_vars[idx][idx_inst];
+//                    }
+//                    if (!it_lterm.second._sign) {
+//                        lterm *= -1;
+//                    }
+//                    cc += lterm;
+//                    lterm.end();
+//                }
+//                cc += c->eval(c->get_cst(), inst);
+//
+//
+//                if(c->get_ctype()==geq) {
+//                    IloConstraint c_(cc >= 0);
+//                    c_.setName(c->_name.c_str());
+//                    cplex.addLazyConstraint(c_);
+//                }
+//                else if(c->get_ctype()==leq) {
+//                    IloConstraint c_(cc <= 0);
+//                    c_.setName(c->_name.c_str());
+//    //                _cplex_model->addLazyConstraint(c_);
+//                    cplex.addLazyConstraint(c_);
+//                }
+//                inst++;
+//            }
+//        }
 //        cplex.setParam(IloCplex::Param::OptimalityTarget, 2);
 //        cplex.setParam(IloCplex::Param::Threads, 1);
 //        cplex.setParam(IloCplex::BarDisplay, 0);
 //        cplex.setParam(IloCplex::AdvInd, 1);
 
-        cplex.setParam(IloCplex::MIPDisplay, 0);
-        cplex.setParam(IloCplex::SimDisplay, 0);
+//        cplex.setParam(IloCplex::MIPDisplay, 0);
+//        cplex.setParam(IloCplex::SimDisplay, 0);
 //        cplex.setParam(IloCplex::PreInd, 0);
 //        cplex.setParam(IloCplex::Reduce, 0);
 //        cplex.setParam(IloCplex::RelaxPreInd,0);
@@ -297,9 +297,9 @@ void CplexProgram::fill_in_cplex_vars() {
 
     for (auto &v_p: _model->_vars) {
         auto v = v_p.second;
-//        if (!v->_new) {
-//            continue;//Variable already added to the program
-//        }
+        if (!v->_new) {
+            continue;//Variable already added to the program
+        }
         v->_new = false;
         vid = v->get_vec_id();
         switch (v->get_intype()) {
@@ -477,75 +477,77 @@ void CplexProgram::create_cplex_constraints() {
     Constraint<>* c;
     for(auto& p: _model->_cons) {
         c = p.second.get();
-        if (*c->_all_lazy) {
-            continue;//Constraint will be added as lazy before solve
+        if (!c->_new && c->_all_satisfied) {
+            continue;
         }
         c->_new = false;
         if (c->is_nonlinear()) {
             throw invalid_argument("Cplex cannot handle nonlinear constraints that are not convex quadratic.\n");
         }
-        nb_inst = c->get_nb_instances();
+        nb_inst = c->get_nb_inst();
         inst = 0;
         for (size_t i = 0; i< nb_inst; i++) {
-            IloNumExpr cc(*_cplex_env);
-            for (auto& it_qterm: c->get_qterms()) {
-                IloNumExpr qterm(*_cplex_env);
-                idx1 = it_qterm.second._p->first->get_vec_id();
-                idx2 = it_qterm.second._p->second->get_vec_id();
-                if (it_qterm.second._p->first->_is_vector) {
-                    auto dim = it_qterm.second._p->first->get_dim(i);
-                    for (size_t j = 0; j<dim; j++) {
-                        qterm += c->eval(it_qterm.second._coef,i,j)*_cplex_vars[idx1][it_qterm.second._p->first->get_id_inst(i,j)]*_cplex_vars[idx2][it_qterm.second._p->second->get_id_inst(i,j)];
+            if (c->_violated[i]) {
+                IloNumExpr cc(*_cplex_env);
+                for (auto& it_qterm: c->get_qterms()) {
+                    IloNumExpr qterm(*_cplex_env);
+                    idx1 = it_qterm.second._p->first->get_vec_id();
+                    idx2 = it_qterm.second._p->second->get_vec_id();
+                    if (it_qterm.second._p->first->_is_vector) {
+                        auto dim = it_qterm.second._p->first->get_dim(i);
+                        for (size_t j = 0; j<dim; j++) {
+                            qterm += c->eval(it_qterm.second._coef,i,j)*_cplex_vars[idx1][it_qterm.second._p->first->get_id_inst(i,j)]*_cplex_vars[idx2][it_qterm.second._p->second->get_id_inst(i,j)];
+                        }
                     }
+                    else {
+                        idx_inst1 = it_qterm.second._p->first->get_id_inst(inst);
+                        idx_inst2 = it_qterm.second._p->second->get_id_inst(inst);
+                        qterm += c->eval(it_qterm.second._coef, inst)*_cplex_vars[idx1][idx_inst1]*_cplex_vars[idx2][idx_inst2];
+                    }
+                    if (!it_qterm.second._sign) {
+                        qterm *= -1;
+                    }
+                    cc += qterm;
+                    qterm.end();
                 }
-                else {                    
-                    idx_inst1 = it_qterm.second._p->first->get_id_inst(inst);
-                    idx_inst2 = it_qterm.second._p->second->get_id_inst(inst);
-                    qterm += c->eval(it_qterm.second._coef, inst)*_cplex_vars[idx1][idx_inst1]*_cplex_vars[idx2][idx_inst2];
-                }
-                if (!it_qterm.second._sign) {
-                    qterm *= -1;
-                }
-                cc += qterm;
-                qterm.end();
-            }
 
-            for (auto& it_lterm: c->get_lterms()) {
-                IloNumExpr lterm(*_cplex_env);
-                idx = it_lterm.second._p->get_vec_id();
-                if (it_lterm.second._p->_is_vector || it_lterm.second._p->is_matrix_indexed() || it_lterm.second._coef->is_matrix()) {
-                    auto dim = it_lterm.second._p->get_dim(i);
-                    for (int j = 0; j<dim; j++) {
-                        lterm += c->eval(it_lterm.second._coef,i,j)*_cplex_vars[idx][it_lterm.second._p->get_id_inst(i,j)];
-                    }                    
+                for (auto& it_lterm: c->get_lterms()) {
+                    IloNumExpr lterm(*_cplex_env);
+                    idx = it_lterm.second._p->get_vec_id();
+                    if (it_lterm.second._p->_is_vector || it_lterm.second._p->is_matrix_indexed() || it_lterm.second._coef->is_matrix()) {
+                        auto dim = it_lterm.second._p->get_dim(i);
+                        for (int j = 0; j<dim; j++) {
+                            lterm += c->eval(it_lterm.second._coef,i,j)*_cplex_vars[idx][it_lterm.second._p->get_id_inst(i,j)];
+                        }
+                    }
+                    else {
+                        idx_inst = it_lterm.second._p->get_id_inst(inst);
+                        lterm += c->eval(it_lterm.second._coef, inst)*_cplex_vars[idx][idx_inst];
+                    }
+                    if (!it_lterm.second._sign) {
+                        lterm *= -1;
+                    }
+                    cc += lterm;
+                    lterm.end();
                 }
-                else {
-                    idx_inst = it_lterm.second._p->get_id_inst(inst);
-                    lterm += c->eval(it_lterm.second._coef, inst)*_cplex_vars[idx][idx_inst];
-                }
-                if (!it_lterm.second._sign) {
-                    lterm *= -1;
-                }
-                cc += lterm;
-                lterm.end();
-            }
-            cc += c->eval(c->get_cst(), inst);
+                cc += c->eval(c->get_cst(), inst);
 
-            
-            if(c->get_ctype()==geq) {
-                IloConstraint c_(cc >= 0);
-                c_.setName(c->_name.c_str());
-                _cplex_model->add(c_);
-            }
-            else if(c->get_ctype()==leq) {
-                IloConstraint c_(cc <= 0);
-                c_.setName(c->_name.c_str());
-                _cplex_model->add(c_);
-            }
-            else if(c->get_ctype()==eq) {
-                IloConstraint c_(cc == 0);
-                c_.setName(c->_name.c_str());
-                _cplex_model->add(c_);
+                
+                if(c->get_ctype()==geq) {
+                    IloConstraint c_(cc >= 0);
+                    c_.setName(c->_name.c_str());
+                    _cplex_model->add(c_);
+                }
+                else if(c->get_ctype()==leq) {
+                    IloConstraint c_(cc <= 0);
+                    c_.setName(c->_name.c_str());
+                    _cplex_model->add(c_);
+                }
+                else if(c->get_ctype()==eq) {
+                    IloConstraint c_(cc == 0);
+                    c_.setName(c->_name.c_str());
+                    _cplex_model->add(c_);
+                }
             }
             inst++;
         }
