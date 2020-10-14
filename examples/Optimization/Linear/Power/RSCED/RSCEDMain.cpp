@@ -18,7 +18,7 @@
 
 int main(int argc, char *argv[]) {
     int output = 0;
-    bool use_cplex = false, use_gurobi = false;
+    bool use_cplex = true, use_gurobi = false;
     double tol = 1e-6;
     double solver_time_end, total_time_end, solve_time, total_time;
     string mehrotra = "no", log_level = "0";
@@ -387,7 +387,7 @@ int main(int argc, char *argv[]) {
     /* Set objective */
     RSCED.min(obj);
 
-//  RSCED.print();
+  RSCED.print();
 
     /** Solve */
     solver<> RSCED_SOLVER(RSCED, ipopt);

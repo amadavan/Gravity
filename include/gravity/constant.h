@@ -235,7 +235,7 @@ namespace gravity {
         }
         
         bool is_scalar() const{
-            return !_is_vector && _dim[0]==1 && _dim[1]==1;
+            return !_is_transposed && !_is_vector && _dim[0]==1 && _dim[1]==1;
         }
         
         /**

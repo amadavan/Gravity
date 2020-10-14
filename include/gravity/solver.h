@@ -506,12 +506,13 @@ namespace gravity {
                         //                else {
                         //                    _model->add(obj_cstr >= 0);
                         //                }
-                        //                _model->print();
+//                        _model->print();
                     }
                 }
-                //        if(_stype!=ipopt) {
-                //            violated_constraints = false;
-                //        }
+//                if(violated_constraints && _stype!=ipopt) {
+//                    _model->reset();
+//                    _model->print();
+//                }
                 nb_it++;
             }
             if (nb_it>1) {

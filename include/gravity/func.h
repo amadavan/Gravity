@@ -6284,6 +6284,9 @@ namespace gravity {
                 }
                 if (!_cst->is_zero()) {
                     _cst = multiply(_cst,fc);
+                    if(is_number() && fc._is_transposed){
+                        _is_transposed = true;
+                    }
                 }
                 for (auto &pair:*_lterms) {
                     pair.second._coef = multiply(pair.second._coef, fc);

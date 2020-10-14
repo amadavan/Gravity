@@ -361,7 +361,7 @@ public:
         }
         //            auto space_size = str.size();
         auto space_size = 0;
-        auto nb_inst = this->get_nb_instances();
+        auto nb_inst = this->get_nb_inst();
         this->allocate_mem();
         if (this->is_matrix()) {
             auto max_cell_size = this->get_max_cell_size();

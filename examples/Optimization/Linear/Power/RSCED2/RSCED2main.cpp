@@ -104,7 +104,8 @@ int main(int argc, char *argv[]) {
 //    RSCEDModel.print();
 
     /** Solve */
-    solver<> RSCED_SOLVER = solver<>(RSCEDModel, cplex);
+//    solver<> RSCED_SOLVER = solver<>(RSCEDModel, cplex);
+    solver<> RSCED_SOLVER = solver<>(RSCEDModel, ipopt);
 
     auto solver_time_start = get_wall_time();
     RSCED_SOLVER.run(output = 5, tol = 1e-6);

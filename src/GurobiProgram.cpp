@@ -8,11 +8,11 @@ GurobiProgram::GurobiProgram(){
     grb_env->set(GRB_DoubleParam_TimeLimit,7200);
 //    grb_env->set(GRB_DoubleParam_MIPGap,0.01);
 //    grb_env->set(GRB_IntParam_Threads,1);
-       grb_env->set(GRB_IntParam_Presolve,0);
-      grb_env->set(GRB_IntParam_NumericFocus,3);
-     grb_env->set(GRB_IntParam_NonConvex,2);
+//       grb_env->set(GRB_IntParam_Presolve,0);
+//      grb_env->set(GRB_IntParam_NumericFocus,3);
+//     grb_env->set(GRB_IntParam_NonConvex,2);
     grb_env->set(GRB_DoubleParam_FeasibilityTol, 1E-6);
-     grb_env->set(GRB_DoubleParam_OptimalityTol, 1E-3);
+     grb_env->set(GRB_DoubleParam_OptimalityTol, 1E-6);
     
     grb_env->set(GRB_IntParam_OutputFlag,1);
 //    grb_mod = new GRBModel(*grb_env);
@@ -22,16 +22,16 @@ GurobiProgram::GurobiProgram(){
 
 GurobiProgram::GurobiProgram(Model<>* m) {
     grb_env = new GRBEnv();
-    grb_env->set(GRB_IntParam_Presolve,0);
+//    grb_env->set(GRB_IntParam_Presolve,0);
     //grb_env->set(GRB_DoubleParam_NodeLimit,1);
     grb_env->set(GRB_DoubleParam_TimeLimit,7200);
     //    grb_env->set(GRB_DoubleParam_MIPGap,0.01);
     //    grb_env->set(GRB_IntParam_Threads,1);
-    grb_env->set(GRB_IntParam_Presolve,0);
-    grb_env->set(GRB_IntParam_NumericFocus,3);
-    grb_env->set(GRB_IntParam_NonConvex,2);
+//    grb_env->set(GRB_IntParam_Presolve,0);
+//    grb_env->set(GRB_IntParam_NumericFocus,3);
+//    grb_env->set(GRB_IntParam_NonConvex,2);
     grb_env->set(GRB_DoubleParam_FeasibilityTol, 1E-6);
-    grb_env->set(GRB_DoubleParam_OptimalityTol, 1E-3);
+    grb_env->set(GRB_DoubleParam_OptimalityTol, 1E-6);
     
     grb_env->set(GRB_IntParam_OutputFlag,1);
     grb_mod = new GRBModel(*grb_env);
@@ -43,16 +43,16 @@ GurobiProgram::GurobiProgram(Model<>* m) {
 
 GurobiProgram::GurobiProgram(const shared_ptr<Model<>>& m) {
     grb_env = new GRBEnv();
-    grb_env->set(GRB_IntParam_Presolve,0);
+//    grb_env->set(GRB_IntParam_Presolve,0);
     //grb_env->set(GRB_DoubleParam_NodeLimit,1);
     grb_env->set(GRB_DoubleParam_TimeLimit,7200);
     //    grb_env->set(GRB_DoubleParam_MIPGap,0.01);
     //    grb_env->set(GRB_IntParam_Threads,1);
-    grb_env->set(GRB_IntParam_Presolve,0);
-    grb_env->set(GRB_IntParam_NumericFocus,3);
-    grb_env->set(GRB_IntParam_NonConvex,2);
+//    grb_env->set(GRB_IntParam_Presolve,0);
+//    grb_env->set(GRB_IntParam_NumericFocus,3);
+//    grb_env->set(GRB_IntParam_NonConvex,2);
     grb_env->set(GRB_DoubleParam_FeasibilityTol, 1E-6);
-    grb_env->set(GRB_DoubleParam_OptimalityTol, 1E-3);
+    grb_env->set(GRB_DoubleParam_OptimalityTol, 1E-6);
     
     grb_env->set(GRB_IntParam_OutputFlag,1);
     grb_mod = new GRBModel(*grb_env);
@@ -274,7 +274,8 @@ void GurobiProgram::create_grb_constraints(){
         inst = 0;
         if (c->is_linear()) {
             for (size_t i = 0; i< nb_inst; i++){
-//                if (c->_violated[i]) {
+                if (c->_violated[i]) {
+//                if (!*c->_all_lazy || !c->_lazy[i]) {
                     linlhs = 0;
                     for (auto& it1: c->get_lterms()) {
                         lterm = 0;
@@ -297,16 +298,17 @@ void GurobiProgram::create_grb_constraints(){
                         linlhs += lterm;
                     }
                     linlhs += c->eval(c->get_cst(), i);
-                if(c->_indices)
-                    grb_mod->addConstr(linlhs,sense,0,c->get_name()+"("+c->_indices->_keys->at(i)+")");
-                else
-                    grb_mod->addConstr(linlhs,sense,0,c->get_name());
-//                }
+                    if(c->_indices)
+                        grb_mod->addConstr(linlhs,sense,0,c->get_name()+"("+c->_indices->_keys->at(i)+")");
+                    else
+                        grb_mod->addConstr(linlhs,sense,0,c->get_name());
+                }
             }
         }
         else {
             for (size_t i = 0; i< nb_inst; i++){
-//                if (c->_violated[i]) {
+                if (c->_violated[i]) {
+//                if (!*c->_all_lazy || !c->_lazy[i]) {
                     quadlhs = 0;
                     for (auto& it1: c->get_lterms()) {
                         lterm = 0;
@@ -372,12 +374,12 @@ void GurobiProgram::create_grb_constraints(){
                     }
                     quadlhs += c->eval(c->get_cst(), i);
                     
-                if(c->_indices)
-                    grb_mod->addQConstr(quadlhs,sense,0,c->get_name()+"("+c->_indices->_keys->at(i)+")");
-                else
-                    grb_mod->addQConstr(quadlhs,sense,0,c->get_name());
+                    if(c->_indices)
+                        grb_mod->addQConstr(quadlhs,sense,0,c->get_name()+"("+c->_indices->_keys->at(i)+")");
+                    else
+                        grb_mod->addQConstr(quadlhs,sense,0,c->get_name());
 //                grb_mod->re
-//                }
+                }
             }
         }
     }
@@ -398,7 +400,7 @@ void GurobiProgram::set_grb_objective(){
     else objt = GRB_MAXIMIZE;
         qobj = 0;
         for (auto& it1: _model->_obj->get_lterms()) {
-            lterm = 0;
+            lterm = 0;            
             if (it1.second._coef->_is_transposed || it1.second._coef->is_matrix() || it1.second._p->is_matrix_indexed()) {
                 auto dim = it1.second._p->get_dim(0);
                 for (size_t j = 0; j<dim; j++) {
